@@ -67,7 +67,23 @@ async def aplicar_roberts_filtro(image):
     roberts_x_result = cv2.filter2D(imagem_redimensionada, -1, roberts_x)
     roberts_y_result = cv2.filter2D(imagem_redimensionada, -1, roberts_y)
 
-    return imagem_redimensionada, roberts_x_result, roberts_y_result
+    return roberts_x_result, roberts_y_result
+
+# async def aplicar_sobel_filtro(image):
+#     altura, largura = image.shape[:2]
+#     nova_altura = altura // 2
+#     nova_largura = largura // 2
+#     imagem_redimensionada = cv2.resize(image, (nova_largura, nova_altura))
+
+#     sobel_x = cv2.Sobel(imagem_redimensionada, cv2.CV_64F, 1, 0, ksize=3)
+#     sobel_x = np.absolute(sobel_x)
+#     sobel_x = np.uint8(sobel_x)
+
+#     sobel_y = cv2.Sobel(imagem_redimensionada, cv2.CV_64F, 0, 1, ksize=3)
+#     sobel_y = np.absolute(sobel_y)
+#     sobel_y = np.uint8(sobel_y)
+
+#     return imagem_redimensionada, sobel_x, sobel_y
 
 async def aplicar_sobel_filtro(image):
     altura, largura = image.shape[:2]
@@ -83,7 +99,18 @@ async def aplicar_sobel_filtro(image):
     sobel_y = np.absolute(sobel_y)
     sobel_y = np.uint8(sobel_y)
 
-    return imagem_redimensionada, sobel_x, sobel_y
+    return sobel_x, sobel_y
+
+# async def aplicar_prewitt_filtro(image):
+#     altura, largura = image.shape[:2]
+#     nova_altura = altura // 2
+#     nova_largura = largura // 2
+#     imagem_redimensionada = cv2.resize(image, (nova_largura, nova_altura))
+
+#     prewitt_x = cv2.filter2D(imagem_redimensionada, -1, np.array([[-1, 0, 1], [-1, 0, 1], [-1, 0, 1]]))
+#     prewitt_y = cv2.filter2D(imagem_redimensionada, -1, np.array([[-1, -1, -1], [0, 0, 0], [1, 1, 1]]))
+
+#     return imagem_redimensionada, prewitt_x, prewitt_y
 
 async def aplicar_prewitt_filtro(image):
     altura, largura = image.shape[:2]
@@ -94,7 +121,7 @@ async def aplicar_prewitt_filtro(image):
     prewitt_x = cv2.filter2D(imagem_redimensionada, -1, np.array([[-1, 0, 1], [-1, 0, 1], [-1, 0, 1]]))
     prewitt_y = cv2.filter2D(imagem_redimensionada, -1, np.array([[-1, -1, -1], [0, 0, 0], [1, 1, 1]]))
 
-    return imagem_redimensionada, prewitt_x, prewitt_y
+    return prewitt_x, prewitt_y
 
 #-------------------SEGMENTAÇÃO-POR-REGIÃO-------------------#
 async def aplicar_watershed(image):
@@ -143,8 +170,8 @@ async def aplicar_otsu_filtro(file: UploadFile):
         otsu_binarized_base64 = await encode_image(otsu_binarized_image)
 
         if otsu_binarized_base64 is not None:
-            return JSONResponse(content={"otsu_binarized_image": otsu_binarized_base64}, media_type="application/json")
-
+            return JSONResponse(content={"otsu_segmentation": otsu_binarized_base64}, media_type="application/json")
+                                                #sei q isso é gambiarra, mas não consegui fazer de outra forma rs
     
     return JSONResponse(content={"error": "O processamento da imagem falhou"}, status_code=500)
 
@@ -168,53 +195,122 @@ async def aplicar_watershed_route(file: UploadFile):
     return JSONResponse(content={"watershed_segmentation": segmented_base64}, media_type="application/json")
 
 
-@app.post("/aplicar-filtro/roberts/")
-async def aplicar_roberts_filtro_route(file: UploadFile):
+# @app.post("/aplicar-filtro/roberts/")
+# async def aplicar_roberts_filtro_route(file: UploadFile):
+#     contents = await file.read()
+#     image = await process_image(contents)
+#     original, roberts_x_result, roberts_y_result = await aplicar_roberts_filtro(image)
+
+#     original_base64 = await encode_image(original)
+#     roberts_x_base64 = await encode_image(roberts_x_result)
+#     roberts_y_base64 = await encode_image(roberts_y_result)
+
+#     return JSONResponse(content={
+#         "original_image": original_base64,
+#         "roberts_x_segmentation": roberts_x_base64,
+#         "roberts_y_segmentation": roberts_y_base64
+#     }, media_type="application/json")
+
+@app.post("/aplicar-filtro/roberts_x/")
+async def aplicar_roberts_x_filtro_route(file: UploadFile):
     contents = await file.read()
     image = await process_image(contents)
-    original, roberts_x_result, roberts_y_result = await aplicar_roberts_filtro(image)
+    roberts_x_result, _ = await aplicar_roberts_filtro(image)
 
-    original_base64 = await encode_image(original)
     roberts_x_base64 = await encode_image(roberts_x_result)
+
+    return JSONResponse(content={
+        "roberts_x_segmentation": roberts_x_base64
+    }, media_type="application/json")
+
+@app.post("/aplicar-filtro/roberts_y/")
+async def aplicar_roberts_y_filtro_route(file: UploadFile):
+    contents = await file.read()
+    image = await process_image(contents)
+    _, roberts_y_result = await aplicar_roberts_filtro(image)
+
     roberts_y_base64 = await encode_image(roberts_y_result)
 
     return JSONResponse(content={
-        "original_image": original_base64,
-        "roberts_x_result": roberts_x_base64,
-        "roberts_y_result": roberts_y_base64
+        "roberts_y_segmentation": roberts_y_base64
     }, media_type="application/json")
 
+# @app.post("/aplicar-filtro/sobel/")
+# async def aplicar_sobel_filtro_route(file: UploadFile):
+#     contents = await file.read()
+#     image = await process_image(contents)
+#     original, sobel_x_result, sobel_y_result = await aplicar_sobel_filtro(image)
 
-@app.post("/aplicar-filtro/sobel/")
-async def aplicar_sobel_filtro_route(file: UploadFile):
+#     original_base64 = await encode_image(original)
+#     sobel_x_base64 = await encode_image(sobel_x_result)
+#     sobel_y_base64 = await encode_image(sobel_y_result)
+
+#     return JSONResponse(content={
+#         "original_image": original_base64,
+#         "sobel_x_segmentation": sobel_x_base64,
+#         "sobel_y_segmentation": sobel_y_base64
+#     }, media_type="application/json")
+
+@app.post("/aplicar-filtro/sobel_x/")
+async def aplicar_sobel_x_filtro_route(file: UploadFile):
     contents = await file.read()
     image = await process_image(contents)
-    original, sobel_x_result, sobel_y_result = await aplicar_sobel_filtro(image)
+    sobel_x_result, _ = await aplicar_sobel_filtro(image)
 
-    original_base64 = await encode_image(original)
     sobel_x_base64 = await encode_image(sobel_x_result)
+
+    return JSONResponse(content={
+        "sobel_x_segmentation": sobel_x_base64
+    }, media_type="application/json")
+
+@app.post("/aplicar-filtro/sobel_y/")
+async def aplicar_sobel_y_filtro_route(file: UploadFile):
+    contents = await file.read()
+    image = await process_image(contents)
+    _, sobel_y_result = await aplicar_sobel_filtro(image)
+
     sobel_y_base64 = await encode_image(sobel_y_result)
 
     return JSONResponse(content={
-        "original_image": original_base64,
-        "sobel_x_result": sobel_x_base64,
-        "sobel_y_result": sobel_y_base64
+        "sobel_y_segmentation": sobel_y_base64
     }, media_type="application/json")
 
+# @app.post("/aplicar-filtro/prewitt/")
+# async def aplicar_prewitt_filtro_route(file: UploadFile):
+#     contents = await file.read()
+#     image = await process_image(contents)
+#     original, prewitt_x_result, prewitt_y_result = await aplicar_prewitt_filtro(image)
 
-@app.post("/aplicar-filtro/prewitt/")
-async def aplicar_prewitt_filtro_route(file: UploadFile):
+#     original_base64 = await encode_image(original)
+#     prewitt_x_base64 = await encode_image(prewitt_x_result)
+#     prewitt_y_base64 = await encode_image(prewitt_y_result)
+
+#     return JSONResponse(content={
+#         "original_image": original_base64,
+#         "prewitt_x_segmentation": prewitt_x_base64,
+#         "prewitt_y_segmentation": prewitt_y_base64
+#     }, media_type="application/json")
+
+@app.post("/aplicar-filtro/prewitt_x/")
+async def aplicar_prewitt_x_filtro_route(file: UploadFile):
     contents = await file.read()
     image = await process_image(contents)
-    original, prewitt_x_result, prewitt_y_result = await aplicar_prewitt_filtro(image)
+    prewitt_x_result, _ = await aplicar_prewitt_filtro(image)
 
-    original_base64 = await encode_image(original)
     prewitt_x_base64 = await encode_image(prewitt_x_result)
+
+    return JSONResponse(content={
+        "prewitt_x_segmentation": prewitt_x_base64
+    }, media_type="application/json")
+
+@app.post("/aplicar-filtro/prewitt_y/")
+async def aplicar_prewitt_y_filtro_route(file: UploadFile):
+    contents = await file.read()
+    image = await process_image(contents)
+    _, prewitt_y_result = await aplicar_prewitt_filtro(image)
+
     prewitt_y_base64 = await encode_image(prewitt_y_result)
 
     return JSONResponse(content={
-        "original_image": original_base64,
-        "prewitt_x_result": prewitt_x_base64,
-        "prewitt_y_result": prewitt_y_base64
+        "prewitt_y_segmentation": prewitt_y_base64
     }, media_type="application/json")
-
