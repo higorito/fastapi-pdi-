@@ -23,7 +23,6 @@ import base64
 from fastapi import FastAPI, UploadFile
 from fastapi.responses import JSONResponse
 
-
 app = FastAPI()
 
 async def process_image(contents):
